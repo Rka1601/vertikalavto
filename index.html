@@ -1,18 +1,71 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Перенаправление...</title>
-    <meta http-equiv="refresh" content="0; url=https://rka1601.pythonanywhere.com">
+    <title>Ваш сайт</title>
     <script>
-        // Динамическая подмена ссылок на странице
-        window.addEventListener('DOMContentLoaded', function() {
-            document.body.innerHTML = document.body.innerHTML
-                .replace(/rka1601\.pythonanywhere\.com/g, 'vertikalavto.ru');
+        // Используем CORS прокси сервис
+        const CORS_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
+        
+        async function loadPage(path = '') {
+            try {
+                const url = `https://rka1601.pythonanywhere.com${path}`;
+                const response = await fetch(CORS_PROXY + encodeURIComponent(url));
+                
+                if (!response.ok) throw new Error('Ошибка загрузки');
+                
+                const html = await response.text();
+                
+                // Заменяем все ссылки на pythonanywhere.com
+                const modifiedHtml = html.replace(
+                    /https:\/\/rka1601\.pythonanywhere\.com/g,
+                    window.location.origin
+                );
+                
+                // Пишем в документ
+                document.write(modifiedHtml);
+                document.close();
+                
+                // Вешаем обработчики на все ссылки
+                document.addEventListener('click', function(e) {
+                    if (e.target.tagName === 'A') {
+                        e.preventDefault();
+                        const href = e.target.getAttribute('href');
+                        if (href && href.includes('pythonanywhere.com')) {
+                            const newPath = href.replace('https://rka1601.pythonanywhere.com', '');
+                            loadPage(newPath);
+                        } else if (href && href.startsWith('/')) {
+                            loadPage(href);
+                        } else if (href) {
+                            window.location.href = href;
+                        }
+                    }
+                });
+                
+            } catch(error) {
+                document.body.innerHTML = `
+                    <div style="font-family: Arial; text-align: center; padding: 50px;">
+                        <h1>Не удалось загрузить сайт</h1>
+                        <p>Попробуйте:</p>
+                        <ul>
+                            <li><a href="https://rka1601.pythonanywhere.com" target="_blank">Открыть через VPN</a></li>
+                            <li><button onclick="location.reload()">Перезагрузить</button></li>
+                        </ul>
+                        <p><small>${error.message}</small></p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Загружаем текущую страницу
+        window.addEventListener('DOMContentLoaded', () => {
+            loadPage(window.location.pathname + window.location.search);
         });
     </script>
 </head>
 <body>
-    <p>Если перенаправление не сработало, <a href="https://rka1601.pythonanywhere.com">нажмите сюда</a>.</p>
+    <div style="text-align: center; padding: 50px;">
+        <h2>Загрузка сайта...</h2>
+        <p>Пожалуйста, подождите</p>
+    </div>
 </body>
 </html>
